@@ -1,0 +1,8 @@
+README.md
+LICENSE
+docker-compose.yml
+render.yaml
+.dockerignore
+.gitignore
+.github/
+config.local.js

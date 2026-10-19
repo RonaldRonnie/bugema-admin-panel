@@ -1,0 +1,13 @@
+# Standalone compose file for the admin console on its own.
+#
+# To run it beside the API's stack instead, add this service to the project's
+# root docker-compose.yml (see README.md, "Hosting it with the API").
+services:
+  admin-panel:
+    build: .
+    ports:
+      - '${ADMIN_PORT:-8080}:8080'
+    # Edit config.js and restart — no rebuild needed.
+    volumes:
+      - ./config.js:/usr/share/nginx/html/config.js:ro
+    restart: unless-stopped

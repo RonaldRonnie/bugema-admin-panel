@@ -1,0 +1,39 @@
+# Render Static Site for the admin console.
+#
+# Deploy: Render dashboard → New → Blueprint → point at this repo, or create a
+# Static Site manually with the same four settings below.
+#
+# This repository holds only the console, so the publish path is the root.
+#
+# Why this is the recommended option: the rewrite rule proxies /api/* to the
+# API, so the browser only ever talks to ONE origin. CORS stops applying
+# entirely, and you never have to keep CORS_ORIGIN in step with the console's
+# URL. With this in place, set apiBaseUrl to '/api/v1' in config.js.
+services:
+  - type: web
+    runtime: static
+    name: bu-admin-panel
+    # Nothing to compile — the console is static files. Render still wants a
+    # build command, so this is a no-op.
+    buildCommand: "echo 'static site, nothing to build'"
+    staticPublishPath: .
+    # The console holds no secrets, so it needs no environment variables.
+    # Its one setting (the API URL) lives in admin-panel/config.js.
+    envVars: []
+    routes:
+      # Proxy the API through this origin. Must be a REWRITE, not a redirect:
+      # a redirect sends the browser cross-origin and CORS applies again.
+      - type: rewrite
+        source: /api/*
+        destination: https://bu-app-t9gy.onrender.com/api/*
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      # config.js carries the API URL; a cached copy would survive a change.
+      - path: /config.js
+        name: Cache-Control
+        value: no-store, must-revalidate

@@ -1,0 +1,9 @@
+# The console has no build step and no dependencies, so almost nothing here
+# is generated. These are the incidentals.
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+_site/

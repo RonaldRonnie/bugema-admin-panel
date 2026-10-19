@@ -1,0 +1,51 @@
+# Publishes this repository to GitHub Pages.
+#
+# The console is static files with no build step, so the repository root is
+# uploaded as-is.
+#
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+#
+# The console then lives at  https://<owner>.github.io/<repo>/
+# and that origin must appear in the API's CORS_ORIGIN, or the browser blocks
+# every request. See README.md.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Files that exist only to help a developer locally, and would be
+      # confusing or useless once published.
+      - name: Stage the publishable files
+        run: |
+          mkdir -p _site
+          cp -r index.html config.js assets js _site/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
