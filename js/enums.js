@@ -14,6 +14,7 @@ export const E = {
   NotificationChannel: ['IN_APP', 'EMAIL', 'SMS', 'PUSH'],
   AnnouncementAudienceType: ['ALL', 'FACULTY', 'DEPARTMENT', 'PROGRAM', 'STAFF', 'LECTURERS', 'STUDENTS'],
   AnnouncementPriority: ['NORMAL', 'URGENT'],
+  CampusLinkCategory: ['ACADEMIC_PORTAL', 'RESULTS', 'FINANCE', 'E_LEARNING', 'LIBRARY', 'ADMISSIONS', 'SUPPORT', 'OTHER'],
   CampusLocationCategory: ['BUILDING', 'LECTURE_ROOM', 'OFFICE', 'HOSTEL', 'LIBRARY', 'CLINIC', 'CAFETERIA', 'ADMIN_OFFICE', 'LANDMARK'],
   BookCopyStatus: ['AVAILABLE', 'BORROWED', 'RESERVED', 'LOST', 'DAMAGED'],
   LoanStatus: ['ACTIVE', 'RETURNED', 'OVERDUE'],

@@ -436,3 +436,77 @@ export function showJoinLink(result) {
     ]),
   });
 }
+
+/**
+ * The academic calendar. Until this existed a semester was only an enum value,
+ * so nothing in the system could tell when it ran — registration windows and
+ * invoice due dates had no date to key off.
+ */
+export const academicTerms = {
+  key: 'academic-terms',
+  label: 'Academic calendar',
+  singular: 'Academic term',
+  group: 'Academics',
+  icon: '🗓',
+  description: 'Each (year, semester) with real boundaries, plus the registration and examination windows. Exactly one term is current at a time; marking a new one stands the previous down.',
+  list: {
+    path: '/academic-terms',
+    filters: [
+      { name: 'academicYear', label: 'Academic year', type: 'text', placeholder: '2026/2027' },
+      { name: 'semester', label: 'Semester', type: 'enum', options: E.Semester },
+    ],
+    columns: [
+      { key: 'academicYear', label: 'Year' },
+      { key: 'semester', label: 'Semester' },
+      { key: 'name', label: 'Name', clip: true },
+      { key: 'startDate', label: 'Starts', type: 'date' },
+      { key: 'endDate', label: 'Ends', type: 'date' },
+      { key: 'registrationEndDate', label: 'Registration closes', type: 'date' },
+      { key: 'isCurrent', label: 'Current' },
+    ],
+  },
+  detailPath: '/academic-terms/:id',
+  create: {
+    path: '/academic-terms', permission: 'academic_terms:manage',
+    subtitle: 'The academic year must be written as "2026/2027" — it is the string that joins this term to the course offerings and invoices already carrying one.',
+    fields: [
+      { name: 'academicYear', label: 'Academic year', type: 'text', required: true, placeholder: '2026/2027' },
+      { name: 'semester', label: 'Semester', type: 'enum', options: E.Semester, required: true },
+      { name: 'name', label: 'Display name', type: 'text', maxLength: 150, placeholder: 'Semester One 2026/2027' },
+      { name: 'startDate', label: 'Term starts', type: 'datetime', required: true },
+      { name: 'endDate', label: 'Term ends', type: 'datetime', required: true },
+      { name: 'registrationStartDate', label: 'Registration opens', type: 'datetime' },
+      { name: 'registrationEndDate', label: 'Registration closes', type: 'datetime' },
+      { name: 'examStartDate', label: 'Examinations start', type: 'datetime' },
+      { name: 'examEndDate', label: 'Examinations end', type: 'datetime' },
+      { name: 'isCurrent', label: 'Make this the current term', type: 'checkbox' },
+    ],
+  },
+  update: {
+    path: '/academic-terms/:id', permission: 'academic_terms:manage',
+    fields: [
+      { name: 'name', label: 'Display name', type: 'text', maxLength: 150 },
+      { name: 'startDate', label: 'Term starts', type: 'datetime' },
+      { name: 'endDate', label: 'Term ends', type: 'datetime' },
+      { name: 'registrationStartDate', label: 'Registration opens', type: 'datetime' },
+      { name: 'registrationEndDate', label: 'Registration closes', type: 'datetime' },
+      { name: 'examStartDate', label: 'Examinations start', type: 'datetime' },
+      { name: 'examEndDate', label: 'Examinations end', type: 'datetime' },
+      { name: 'isCurrent', label: 'Make this the current term', type: 'checkbox' },
+    ],
+  },
+  actions: [
+    {
+      key: 'set-current', label: 'Make current', glyph: '★',
+      permission: 'academic_terms:manage', method: 'PATCH', path: '/academic-terms/:id',
+      confirm: 'Make this the current term? Whichever term holds it now stands down.',
+      body: () => ({ isCurrent: true }),
+      when: (t) => !t.isCurrent,
+      successMessage: 'Current term updated.',
+    },
+  ],
+  remove: {
+    path: '/academic-terms/:id', permission: 'academic_terms:manage',
+    confirm: 'Delete this term? Rejected if it still carries fee structures.',
+  },
+};

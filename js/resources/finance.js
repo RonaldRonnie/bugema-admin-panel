@@ -264,3 +264,140 @@ export const documentRequests = {
     },
   ],
 };
+
+/**
+ * The published tariff for one programme in one term. Before this, every
+ * invoice was typed by hand with a free-text description and an amount, which
+ * cannot bill a cohort and cannot be checked against anything.
+ *
+ * Publishing is the point of no return: a published structure is what students
+ * were billed against, so the API refuses to edit or delete one. Withdraw it
+ * first, or supersede it.
+ */
+export const feeStructures = {
+  key: 'fee-structures',
+  label: 'Fee structures',
+  singular: 'Fee structure',
+  group: 'Finance',
+  icon: '📐',
+  description: 'The tariff a cohort is billed from. Mandatory items total into one invoice per student; optional items are offered but never billed automatically.',
+  list: {
+    path: '/fee-structures',
+    filters: [
+      { name: 'programId', label: 'Programme', type: 'select', lookup: 'programs' },
+      { name: 'academicTermId', label: 'Term', type: 'select', lookup: 'academicTerms' },
+    ],
+    columns: [
+      { key: 'program.code', label: 'Programme' },
+      { key: 'term.academicYear', label: 'Year' },
+      { key: 'term.semester', label: 'Semester' },
+      {
+        key: 'yearOfStudy', label: 'Year of study',
+        render: (r) => el('span', { text: r.yearOfStudy === 0 ? 'All years' : `Year ${r.yearOfStudy}` }),
+      },
+      { key: 'mandatoryTotal', label: 'Billed each', type: 'money' },
+      { key: 'isPublished', label: 'Published' },
+    ],
+  },
+  detailPath: '/fee-structures/:id',
+  detailFields: [
+    { key: 'program.name', label: 'Programme' },
+    { key: 'term.academicYear', label: 'Academic year' },
+    { key: 'term.semester', label: 'Semester' },
+    {
+      key: 'yearOfStudy', label: 'Year of study',
+      render: (r) => el('span', { text: r.yearOfStudy === 0 ? 'Every year of the programme' : `Year ${r.yearOfStudy}` }),
+    },
+    { key: 'isPublished', label: 'Published' },
+    { key: 'publishedAt', label: 'Published at', type: 'datetime' },
+    { key: 'mandatoryTotal', label: 'Billed each student', type: 'money' },
+    { key: 'optionalTotal', label: 'Optional items total', type: 'money' },
+    {
+      key: 'items', label: 'Items',
+      render: (r) => el('table', { class: 'table' }, [
+        el('thead', {}, el('tr', {}, [
+          el('th', { text: 'Item' }),
+          el('th', { text: 'Amount' }),
+          el('th', { text: 'Billed' }),
+        ])),
+        el('tbody', {}, (r.items || []).map((item) => el('tr', {}, [
+          el('td', {}, [
+            el('div', { text: item.name }),
+            item.description ? el('div', { class: 'card-sub', text: item.description }) : null,
+          ]),
+          el('td', { class: 'tabular', text: fmtMoney(item.amount) }),
+          el('td', {}, badge(item.isMandatory ? 'Mandatory' : 'Optional', item.isMandatory ? 'ok' : '')),
+        ]))),
+      ]),
+    },
+  ],
+  create: {
+    path: '/fee-structures', permission: 'fee_structures:manage',
+    subtitle: 'Created as a draft. Nothing is billed until it is published.',
+    defaults: {
+      items: [
+        { name: 'Tuition', amount: 0, isMandatory: true },
+        { name: 'Functional fees', amount: 0, isMandatory: true },
+      ],
+    },
+    fields: [
+      { name: 'programId', label: 'Programme', type: 'select', lookup: 'programs', required: true },
+      { name: 'academicTermId', label: 'Academic term', type: 'select', lookup: 'academicTerms', required: true },
+      {
+        name: 'yearOfStudy', label: 'Year of study', type: 'integer', min: 0, max: 10,
+        help: '0 applies the tariff to every year of the programme.',
+      },
+      {
+        name: 'items', label: 'Fee items', type: 'json', rows: 10, required: true,
+        help: 'A list of { name, amount, isMandatory }. Only mandatory items are billed.',
+      },
+    ],
+  },
+  update: {
+    path: '/fee-structures/:id', permission: 'fee_structures:manage',
+    subtitle: 'Only a draft can be edited. Sending items replaces every line.',
+    fields: [
+      { name: 'yearOfStudy', label: 'Year of study', type: 'integer', min: 0, max: 10 },
+      { name: 'items', label: 'Fee items', type: 'json', rows: 10 },
+    ],
+  },
+  actions: [
+    {
+      key: 'publish', label: 'Publish', glyph: '✓', permission: 'fee_structures:manage',
+      method: 'POST', path: '/fee-structures/:id/publish',
+      confirm: 'Publish this tariff? Once published it cannot be edited — only withdrawn.',
+      when: (f) => !f.isPublished,
+      successMessage: 'Fee structure published.',
+    },
+    {
+      key: 'withdraw', label: 'Withdraw', glyph: '↩', variant: 'danger',
+      permission: 'fee_structures:manage', method: 'POST', path: '/fee-structures/:id/withdraw',
+      confirm: 'Withdraw this tariff so it can be edited again? Invoices already raised against it are not touched.',
+      when: (f) => f.isPublished,
+      successMessage: 'Fee structure withdrawn.',
+    },
+    {
+      key: 'generate', label: 'Bill the cohort', glyph: '🧾',
+      permission: 'invoices:manage', method: 'POST', path: '/fee-structures/:id/generate-invoices',
+      title: 'Raise invoices from this tariff',
+      subtitle: 'Leave the dry run ticked first: it reports exactly what a real run would bill and writes nothing. Re-running never bills a student twice.',
+      when: (f) => f.isPublished,
+      initial: () => ({ dryRun: true }),
+      fields: [
+        { name: 'dueDate', label: 'Due date', type: 'datetime', required: true },
+        { name: 'dryRun', label: 'Dry run — report only, write nothing', type: 'checkbox' },
+      ],
+      onResult: (result) => {
+        notify.ok(result.dryRun
+          ? `Dry run: ${result.wouldCreate} invoice(s) of ${fmtMoney(result.amountEach)} would be raised; ${result.skippedAlreadyBilled} already billed.`
+          : `${result.created} invoice(s) of ${fmtMoney(result.amountEach)} raised; ${result.skippedAlreadyBilled} already billed.`);
+      },
+      successMessage: 'Done.',
+    },
+  ],
+  remove: {
+    path: '/fee-structures/:id', permission: 'fee_structures:manage',
+    confirm: 'Delete this draft tariff?',
+    when: (f) => !f.isPublished,
+  },
+};
