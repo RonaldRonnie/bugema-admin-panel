@@ -8,7 +8,7 @@
  * everything and let the API answer", which is the honest behaviour for a
  * limited operator: they see a clear 403 rather than a mysteriously empty menu.
  */
-import { api, tokens } from './api.js';
+import { api, tokens, setMutationHandler } from './api.js';
 
 const listeners = new Set();
 
@@ -106,3 +106,14 @@ export async function lookup(path, query) {
 }
 
 export function invalidateLookups() { lookupCache.clear(); }
+
+/**
+ * Any successful write can change what belongs in a picker — a new faculty, a
+ * renamed programme, a deleted course. Rather than ask each screen to remember
+ * which collections it touched, we drop the whole cache on every mutation and
+ * let the next form that needs a collection fetch it again. The cache holds a
+ * handful of short lists and writes are human-paced, so the re-fetch costs one
+ * request at the moment a form opens, and the console stops showing the
+ * operator a stale version of a change they just made.
+ */
+setMutationHandler(() => invalidateLookups());
