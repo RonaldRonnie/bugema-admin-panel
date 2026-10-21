@@ -32,6 +32,11 @@ export const LOOKUPS = {
   departments: { path: '/departments', noPagination: true, label: (d) => `${d.code} — ${d.name}` },
   programs: { path: '/programs', noPagination: true, label: (p) => `${p.code} — ${p.name}`, meta: (p) => p.level },
   courses: { path: '/courses', search: true, label: (c) => `${c.code} — ${c.title}` },
+  academicTerms: {
+    path: '/academic-terms',
+    label: (t) => t.name || `${t.academicYear} ${String(t.semester || '').replace('SEMESTER_', 'Semester ')}`,
+    meta: (t) => (t.isCurrent ? 'current term' : undefined),
+  },
   courseOfferings: {
     path: '/academics/course-offerings',
     label: (o) => `${o.course?.code ?? o.courseId?.slice(0, 8)} · ${o.academicYear} ${String(o.semester || '').replace('SEMESTER_', 'S')}`,

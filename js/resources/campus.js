@@ -496,3 +496,74 @@ export const visitorLogs = {
     },
   ],
 };
+
+/**
+ * Links into the university's primary student information system.
+ *
+ * That system stays the system of record for admissions, registration and the
+ * official fee ledger. Rather than pretend those live here, the app carries a
+ * curated set of links into it, which every client renders as cards. This
+ * needs nothing from that system's vendor — it is the step that works today,
+ * while a real data feed is still being negotiated.
+ */
+export const campusLinks = {
+  key: 'campus-links',
+  label: 'Primary system links',
+  singular: 'Link',
+  group: 'Campus services',
+  icon: '🔗',
+  description: 'Destinations in the university’s own systems — the portal, results, fee statements, e-learning. Reading them is public, so the mobile app can show the cards before anyone signs in.',
+  list: {
+    path: '/campus-links',
+    query: { includeInactive: true },
+    filters: [
+      { name: 'category', label: 'Category', type: 'enum', options: E.CampusLinkCategory },
+      { name: 'audience', label: 'Audience', type: 'enum', options: E.AnnouncementAudienceType },
+    ],
+    columns: [
+      { key: 'icon', label: '' },
+      { key: 'title', label: 'Title' },
+      { key: 'category', label: 'Category' },
+      { key: 'audience', label: 'Audience' },
+      { key: 'url', label: 'Destination', clip: true },
+      { key: 'requiresLogin', label: 'Signs in again' },
+      { key: 'sortOrder', label: 'Position' },
+      { key: 'isActive', label: 'Live' },
+    ],
+  },
+  detailPath: '/campus-links/:id',
+  create: {
+    path: '/campus-links', permission: 'campus_links:manage',
+    subtitle: 'Only http(s) addresses are accepted — the clients open these in a browser view on the student’s own device.',
+    defaults: { requiresLogin: true, isActive: true, sortOrder: 0 },
+    fields: [
+      { name: 'title', label: 'Title', type: 'text', required: true, maxLength: 150 },
+      { name: 'url', label: 'Destination URL', type: 'text', required: true, placeholder: 'https://portal.bugemauniv.ac.ug' },
+      { name: 'category', label: 'Category', type: 'enum', options: E.CampusLinkCategory, required: true },
+      { name: 'description', label: 'Description', type: 'textarea', maxLength: 500 },
+      { name: 'icon', label: 'Icon', type: 'text', maxLength: 50, placeholder: '🎓' },
+      { name: 'audience', label: 'Audience', type: 'enum', options: E.AnnouncementAudienceType },
+      {
+        name: 'requiresLogin', label: 'Destination asks for its own sign-in', type: 'checkbox',
+        help: 'Clients warn the user before handing them off — the campus session does not carry across.',
+      },
+      { name: 'sortOrder', label: 'Position', type: 'integer', min: 0 },
+      { name: 'isActive', label: 'Show this link', type: 'checkbox' },
+    ],
+  },
+  update: {
+    path: '/campus-links/:id', permission: 'campus_links:manage',
+    fields: [
+      { name: 'title', label: 'Title', type: 'text', maxLength: 150 },
+      { name: 'url', label: 'Destination URL', type: 'text' },
+      { name: 'category', label: 'Category', type: 'enum', options: E.CampusLinkCategory },
+      { name: 'description', label: 'Description', type: 'textarea', maxLength: 500 },
+      { name: 'icon', label: 'Icon', type: 'text', maxLength: 50 },
+      { name: 'audience', label: 'Audience', type: 'enum', options: E.AnnouncementAudienceType },
+      { name: 'requiresLogin', label: 'Destination asks for its own sign-in', type: 'checkbox' },
+      { name: 'sortOrder', label: 'Position', type: 'integer', min: 0 },
+      { name: 'isActive', label: 'Show this link', type: 'checkbox' },
+    ],
+  },
+  remove: { path: '/campus-links/:id', permission: 'campus_links:manage', confirm: 'Delete this link?' },
+};

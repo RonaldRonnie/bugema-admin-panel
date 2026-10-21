@@ -41,9 +41,18 @@ export const tokens = {
 
 let refreshInFlight = null;
 let onSessionLost = () => {};
+let onMutation = () => {};
 
 /** Registered by the app so a dead session can bounce the user to the login screen. */
 export function setSessionLostHandler(fn) { onSessionLost = fn; }
+
+/**
+ * Registered by the store so a successful write drops cached reference data.
+ * Without it a faculty created on one screen stays missing from every picker
+ * that was populated earlier in the session, and the operator has to reload
+ * the browser to see their own change.
+ */
+export function setMutationHandler(fn) { onMutation = fn; }
 
 function qs(params) {
   if (!params) return '';
@@ -141,6 +150,8 @@ export async function request(path, opt = {}) {
     throw new ApiError(res.status, err.code || `HTTP_${res.status}`,
       err.message || res.statusText || 'Request failed.', err.details);
   }
+
+  if (method !== 'GET') onMutation(path, method);
 
   return raw ? envelope : envelope.data;
 }

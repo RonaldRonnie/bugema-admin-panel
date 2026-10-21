@@ -291,6 +291,18 @@ table.data td.clip { max-width: 320px; overflow: hidden; text-overflow: ellipsis
 .stat .value { font-size: 26px; font-weight: 650; margin-top: 4px; letter-spacing: -0.02em; }
 .stat .foot { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
 
+/* A dashboard tile that is also a way into the list it counts. The anchor
+   carries no styling of its own so the card inside keeps its exact look. */
+.stat-link { display: block; text-decoration: none; color: inherit; }
+.stat-link:hover .stat { border-color: var(--accent); }
+.stat-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius); }
+
+/* A count that is only worth noticing when it is above zero — overdue
+   invoices, open safety alerts. Applied by the dashboard, never by the
+   counter itself, so the same tile reads plainly elsewhere. */
+.stat.danger { border-color: var(--danger); background: var(--danger-soft); }
+.stat.danger .value { color: var(--danger); }
+
 .bars { display: flex; flex-direction: column; gap: 9px; }
 .bar-row { display: grid; grid-template-columns: 150px 1fr 48px; gap: 10px; align-items: center; font-size: 12.5px; }
 .bar-track { height: 8px; border-radius: 999px; background: var(--bg-elev-2); overflow: hidden; }

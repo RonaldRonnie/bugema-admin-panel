@@ -16,6 +16,7 @@ import { renderMessaging, renderDepartmentChannel } from './pages/messaging.js';
 import { renderBroadcast, renderSearch, renderFiles, renderDigitalId, renderApiConsole } from './pages/operations.js';
 import { renderAccount } from './pages/account.js';
 import { personName } from './format.js';
+import { startLiveUpdates, stopLiveUpdates } from './live.js';
 
 const CFG = window.BU_ADMIN_CONFIG || {};
 const root = document.getElementById('app');
@@ -40,6 +41,7 @@ document.documentElement.dataset.theme = state.theme;
 /* ----------------------------------------------------------------- boot */
 
 setSessionLostHandler(() => {
+  stopLiveUpdates();
   clearSession();
   notify.info('Your session ended. Please sign in again.', 'Signed out');
   showLogin();
@@ -52,6 +54,7 @@ function showLogin() {
       invalidateLookups();
       buildShell();
       startOrRefreshRouter();
+      startLiveUpdates();
     } catch (err) {
       notify.error(err, 'Signed in, but could not load your profile');
     }
@@ -84,6 +87,7 @@ async function boot() {
   }
   buildShell();
   startOrRefreshRouter();
+  startLiveUpdates();
 }
 
 /* ---------------------------------------------------------------- shell */
@@ -126,6 +130,7 @@ function buildShell() {
           class: 'icon-btn', text: '⎋', title: 'Sign out',
           onClick: async () => {
             try { await import('./api.js').then(({ api }) => api.post('/auth/logout', {})); } catch { /* already gone */ }
+            stopLiveUpdates();
             clearSession();
             window.location.hash = '#/';
             window.location.reload();
