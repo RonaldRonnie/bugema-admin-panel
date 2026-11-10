@@ -37,3 +37,21 @@ services:
       - path: /config.js
         name: Cache-Control
         value: no-store, must-revalidate
+      # The console's code is ES modules loaded by plain URL — no build step,
+      # so no content hash in the file names. Without an explicit header a
+      # browser may keep using an old copy of a module after a deploy
+      # (heuristic caching), or mix old and new modules in one page. no-cache
+      # still lets it keep the files, but it must check with Render first —
+      # a 304 when nothing changed, the new file when something did.
+      - path: /
+        name: Cache-Control
+        value: no-cache
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /js/*
+        name: Cache-Control
+        value: no-cache
+      - path: /assets/*
+        name: Cache-Control
+        value: no-cache

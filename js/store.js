@@ -41,7 +41,10 @@ export async function loadSession() {
   const me = await api.get('/auth/me');
   state.user = me;
   state.roles = me.roles || [];
-  await loadPermissions();
+  // An account still holding its initial password can read nothing else, so
+  // asking for /roles would only collect a 403. The console shows it the
+  // change-password screen instead (app.js).
+  if (!me.mustChangePassword) await loadPermissions();
   emit();
   return me;
 }

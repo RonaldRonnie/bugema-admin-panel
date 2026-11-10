@@ -128,12 +128,19 @@ detail drawer, forms and nested collections from it. Adding an endpoint is
 usually a config entry. Anything genuinely bespoke — the dashboard, the audit
 trail, chat, the access matrix — gets its own module in `js/pages/`.
 
-Three behaviours worth knowing:
+Behaviours worth knowing:
 
-- **Token refresh is single-flight.** When several requests hit an expired
-  token at once, exactly one `/auth/refresh` goes out. A second would present
-  an already-rotated token, and the API revokes the whole session family when
-  that happens.
+- **Token refresh is single-flight, across tabs too.** When several requests
+  hit an expired token at once, in one tab or several, exactly one
+  `/auth/refresh` goes out (tabs queue on a Web Lock, and the second finds the
+  tokens already rotated). A second refresh would present an already-rotated
+  token, and the API revokes the whole session family when that happens. Only
+  the API rejecting the refresh token signs you out; a network error or a 5xx
+  while the API wakes from idle keeps the session.
+- **New accounts choose their own password first.** Provisioning a user takes
+  an optional initial password; leave it blank and the API generates one,
+  which the console shows once. That person's first sign-in lands on a
+  "choose your password" screen, and nothing else works until they do.
 - **Permissions are advisory in the UI.** On sign-in the console reads
   `/roles` and computes your effective permission set, then dims what you
   cannot use. If your account cannot read `/roles`, it shows everything and

@@ -2,7 +2,7 @@
  * Application shell: boots the session, builds the sidebar, and dispatches
  * each route to either a bespoke page or the generic resource engine.
  */
-import { setSessionLostHandler, tokens, API_BASE } from './api.js';
+import { api, setSessionLostHandler, setPasswordChangeRequiredHandler, tokens, API_BASE } from './api.js';
 import { state, loadSession, clearSession, setTheme, isAuthenticated, definitelyCannot, invalidateLookups } from './store.js';
 import { el, button, badge, notify, skeleton, errorState } from './ui.js';
 import { defineRoute, setNotFound, startRouter, navigate, href, parseHash, setNavigateHook } from './router.js';
@@ -15,6 +15,7 @@ import { renderAccessMatrix } from './pages/access-matrix.js';
 import { renderMessaging, renderDepartmentChannel } from './pages/messaging.js';
 import { renderBroadcast, renderSearch, renderFiles, renderDigitalId, renderApiConsole } from './pages/operations.js';
 import { renderAccount } from './pages/account.js';
+import { renderPasswordChange } from './pages/password-change.js';
 import { personName } from './format.js';
 import { startLiveUpdates, stopLiveUpdates } from './live.js';
 
@@ -47,17 +48,56 @@ setSessionLostHandler(() => {
   showLogin();
 });
 
+// The API holds an account provisioned with an initial password at the
+// change-password step. Normally we see the flag on /auth/me first; this
+// catches the account being flagged while the console is already open.
+setPasswordChangeRequiredHandler(() => showPasswordChange());
+
+/**
+ * Ends the session on the server as well as here. Logout takes the refresh
+ * token in its body; without it the API rejects the call and the session
+ * stays live until it expires.
+ */
+async function signOut() {
+  const refreshToken = tokens.get()?.refreshToken;
+  try { if (refreshToken) await api.post('/auth/logout', { refreshToken }); } catch { /* already gone */ }
+  stopLiveUpdates();
+  clearSession();
+}
+
 function showLogin() {
+  showingPasswordChange = false;
   renderLogin(root, async () => {
     try {
       await loadSession();
       invalidateLookups();
-      buildShell();
-      startOrRefreshRouter();
-      startLiveUpdates();
+      enterConsole();
     } catch (err) {
       notify.error(err, 'Signed in, but could not load your profile');
     }
+  });
+}
+
+/** The signed-in account goes to the console, or first to set its own password. */
+function enterConsole() {
+  if (state.user?.mustChangePassword) { showPasswordChange(); return; }
+  buildShell();
+  startOrRefreshRouter();
+  startLiveUpdates();
+}
+
+let showingPasswordChange = false;
+function showPasswordChange() {
+  if (showingPasswordChange) return;
+  showingPasswordChange = true;
+  stopLiveUpdates();
+  // Anything still on screen belongs to a console this account cannot use yet.
+  document.getElementById('modal-root')?.replaceChildren();
+  renderPasswordChange(root, {
+    user: state.user,
+    // The API has just revoked every session, this one included.
+    onChanged: () => { clearSession(); showLogin(); },
+    onSignOut: async () => { await signOut(); showLogin(); },
   });
 }
 
@@ -85,9 +125,7 @@ async function boot() {
     showLogin();
     return;
   }
-  buildShell();
-  startOrRefreshRouter();
-  startLiveUpdates();
+  enterConsole();
 }
 
 /* ---------------------------------------------------------------- shell */
@@ -129,9 +167,7 @@ function buildShell() {
         el('button', {
           class: 'icon-btn', text: '⎋', title: 'Sign out',
           onClick: async () => {
-            try { await import('./api.js').then(({ api }) => api.post('/auth/logout', {})); } catch { /* already gone */ }
-            stopLiveUpdates();
-            clearSession();
+            await signOut();
             window.location.hash = '#/';
             window.location.reload();
           },

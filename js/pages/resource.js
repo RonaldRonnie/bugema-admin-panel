@@ -325,7 +325,13 @@ export async function openCreate(resource, reload, presets = {}) {
       return api.post(path, payload);
     },
   });
-  if (result) { notify.ok(spec.successMessage || `${resource.singular || 'Record'} created.`); reload?.(); }
+  if (result) {
+    notify.ok(spec.successMessage || `${resource.singular || 'Record'} created.`);
+    reload?.();
+    // For a response that carries something to act on now — a generated
+    // password, say — that is gone once this modal closes.
+    spec.afterCreate?.(result);
+  }
   return result;
 }
 
