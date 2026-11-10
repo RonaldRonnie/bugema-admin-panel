@@ -1,6 +1,6 @@
 /** Identity & access: users, roles, permissions. */
 import { E } from '../enums.js';
-import { el, badge } from '../ui.js';
+import { el, badge, button, notify, openModal } from '../ui.js';
 import { personName, fmtDateTime, renderValue } from '../format.js';
 
 const nameCol = {
@@ -10,6 +10,43 @@ const nameCol = {
     el('div', { class: 'card-sub', text: u.email || '' }),
   ]),
 };
+
+/**
+ * Shows a generated initial password the one time the API returns it. It is
+ * stored only as a hash, so there is no reading it back later: if this is
+ * closed before it is passed on, delete the account and create it again, or
+ * have the person use "Forgot password".
+ */
+function showTemporaryPassword(user) {
+  const value = el('input', {
+    type: 'text', readonly: true, value: user.temporaryPassword, class: 'mono',
+    style: { fontSize: '18px', letterSpacing: '1px' },
+    onFocus: (e) => e.target.select(),
+  });
+  openModal({
+    title: 'Temporary password',
+    subtitle: `For ${personName(user)} (${user.email}). This is the only time it is shown.`,
+    render: () => el('div', {}, [
+      el('div', { class: 'field' }, [el('label', { text: 'Give this to them' }), value]),
+      el('p', {
+        class: 'muted',
+        text: 'They sign in with it and are asked to choose their own password straight away. ' +
+          'Nothing else works for the account until they do.',
+      }),
+    ]),
+    footer: (close) => [
+      button('Copy', {
+        onClick: async () => {
+          try { await navigator.clipboard.writeText(user.temporaryPassword); notify.ok('Copied.'); }
+          catch { value.focus(); value.select(); notify.info('Press Ctrl+C to copy.'); }
+        },
+      }),
+      button('Done', { variant: 'primary', onClick: close }),
+    ],
+  });
+  value.focus();
+  value.select();
+}
 
 const rolesCol = {
   key: 'roles', label: 'Roles',
@@ -84,7 +121,7 @@ export const users = {
     path: '/users',
     permission: 'users:create',
     title: 'Provision an account',
-    subtitle: 'The API generates a temporary password and emails it to the new account.',
+    subtitle: 'They sign in with an initial password and must choose their own before anything else works.',
     fields: [
       { name: 'email', label: 'Email', type: 'email', required: true },
       { name: 'type', label: 'Account type', type: 'enum', options: E.UserType, required: true, default: 'STUDENT' },
@@ -97,8 +134,14 @@ export const users = {
       { name: 'departmentId', label: 'Department', type: 'select', lookup: 'departments' },
       { name: 'programId', label: 'Programme', type: 'select', lookup: 'programs' },
       { name: 'roleIds', label: 'Roles', type: 'refs', lookup: 'roles', help: 'Assigning a role here takes effect immediately.' },
+      {
+        name: 'initialPassword', label: 'Initial password', type: 'text', maxLength: 72,
+        placeholder: 'Leave blank to generate one',
+        help: 'At least 8 characters with upper- and lower-case letters and a number. Leave it blank and one is generated and shown to you once.',
+      },
     ],
-    successMessage: 'Account created. A temporary password has been emailed.',
+    successMessage: 'Account created.',
+    afterCreate: (user) => { if (user?.temporaryPassword) showTemporaryPassword(user); },
   },
   update: {
     path: '/users/:id',

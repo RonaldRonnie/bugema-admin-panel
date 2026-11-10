@@ -125,7 +125,7 @@ export function renderAccount(container) {
         onClick: async () => {
           const done = await openFormModal({
             title: 'Change password',
-            subtitle: 'At least 8 characters, with upper and lower case, a digit and a symbol. All your sessions are revoked on success.',
+            subtitle: 'At least 8 characters, with upper- and lower-case letters and a number. All your sessions are revoked on success.',
             columns: 1,
             fields: [
               { name: 'currentPassword', label: 'Current password', type: 'password', required: true },
