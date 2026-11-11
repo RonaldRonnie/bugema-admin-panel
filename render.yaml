@@ -25,7 +25,7 @@ services:
       # a redirect sends the browser cross-origin and CORS applies again.
       - type: rewrite
         source: /api/*
-        destination: https://bu-app-t9gy.onrender.com/api/*
+        destination: https://bu-app-j1ug.onrender.com/api/*
     headers:
       - path: /*
         name: X-Content-Type-Options
