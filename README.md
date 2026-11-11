@@ -196,7 +196,7 @@ So wherever you host it, the only two settings that matter are:
 
 | Where | Setting | Value |
 |---|---|---|
-| `config.js` | `apiBaseUrl` | the API URL, e.g. `https://bu-app-t9gy.onrender.com/api/v1` |
+| `config.js` | `apiBaseUrl` | the API URL, e.g. `https://bu-app-j1ug.onrender.com/api/v1` |
 | API host (Render) | `CORS_ORIGIN` | the console's own origin, e.g. `https://<owner>.github.io` |
 
 `CORS_ORIGIN` accepts a **comma-separated list**, so the deployed console and
@@ -231,7 +231,7 @@ manual settings are:
 | Build command | *(leave empty, or `echo nothing to build`)* |
 | Publish directory | `.` (repository root) |
 | Environment variables | *none* |
-| Redirect/Rewrite | Source `/api/*` → Destination `https://bu-app-t9gy.onrender.com/api/*`, Action **Rewrite** |
+| Redirect/Rewrite | Source `/api/*` → Destination `https://bu-app-j1ug.onrender.com/api/*`, Action **Rewrite** |
 
 Then set `apiBaseUrl: '/api/v1'` in `config.js`.
 
@@ -251,7 +251,7 @@ publishes it. One-time setup:
 
 Then:
 
-1. `apiBaseUrl: 'https://bu-app-t9gy.onrender.com/api/v1'` in `config.js`
+1. `apiBaseUrl: 'https://bu-app-j1ug.onrender.com/api/v1'` in `config.js`
 2. On Render, add the Pages origin to `CORS_ORIGIN`:
    `https://<owner>.github.io` — the **origin only**, no repository path
 3. Redeploy the API so the new value is picked up

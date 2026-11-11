@@ -14,7 +14,7 @@ window.BU_ADMIN_CONFIG = {
   /**
    * Base URL of the API, including the version prefix and no trailing slash.
    *
-   *   Deployed API:  'https://bu-app-t9gy.onrender.com/api/v1'
+   *   Deployed API:  'https://bu-app-j1ug.onrender.com/api/v1'
    *   Local API:     'http://localhost:3000/api/v1'
    *   Same-origin:   '/api/v1'   (console served behind the same host or a
    *                               rewrite rule as the API — no CORS at all)
@@ -22,7 +22,7 @@ window.BU_ADMIN_CONFIG = {
    * Whichever absolute URL you use here must also appear in the API's
    * CORS_ORIGIN, or the browser blocks every request. See README.md.
    */
-  apiBaseUrl: 'https://bu-app-t9gy.onrender.com/api/v1',
+  apiBaseUrl: 'https://bu-app-j1ug.onrender.com/api/v1',
 
   /** Shown in the sidebar header. */
   institution: 'Bugema University',
